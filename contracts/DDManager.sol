@@ -8,7 +8,7 @@ import "./HitchensUnorderedAddressSet.sol";
 import "./DirectDonation.sol";
 interface IDDManager {
 
-    function createDirectDonation(address key) external;
+    function createDirectDonation() external returns(address);
     function removeDirectDonation(address key) external;
     function getDirectionDonationCount() external returns(uint256);
     function getDirectionDonationList() external view  returns(address[] memory);
@@ -27,26 +27,27 @@ contract DDManager is IDDManager, Ownable{
     constructor(address _walletAddress) Ownable(){
         Ownable._transferOwnership(_walletAddress);
     }
-    function createDirectDonation(address key) external onlyOwner{
-        DirectDonation instance = new DirectDonation(address(this));
-        DonationSet.insert(address(instance)); // Note that this will fail automatically if the key already exists.
-        emit LogCreateDirectDonation(msg.sender, key);
+    function createDirectDonation() external override onlyOwner returns(address){
+        address instanceAddr = address(new DirectDonation(Ownable.owner()));
+        DonationSet.insert(instanceAddr); // Note that this will fail automatically if the key already exists.
+        emit LogCreateDirectDonation(msg.sender, instanceAddr);
+        return instanceAddr ;
     }
     
-    function removeDirectDonation(address key) external onlyOwner {
+    function removeDirectDonation(address key) external override onlyOwner {
         DonationSet.remove(key); // Note that this will fail automatically if the key doesn't exist
         emit LogRemoveDirectDonation(msg.sender, key);
     }
     
-    function getDirectionDonationCount() external view onlyOwner returns(uint256) {
+    function getDirectionDonationCount() external view override onlyOwner returns(uint256) {
         return DonationSet.count();
     }
     
-    function getDirectionDonationList() external view onlyOwner returns(address[] memory) {
+    function getDirectionDonationList() external view override onlyOwner returns(address[] memory) {
         return DonationSet.list();
     }
 
-    function getDirectDonationAtIndex(uint index) external view onlyOwner returns( address ) {
+    function getDirectDonationAtIndex(uint index) external view override onlyOwner returns( address ) {
         return DonationSet.keyAtIndex(index) ;
     }
 }

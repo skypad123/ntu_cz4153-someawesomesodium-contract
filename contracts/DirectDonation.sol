@@ -16,6 +16,7 @@ interface IDirectDonation {
     function getAllocationValue( address _walletAddress ) external returns(uint32); 
     function getAllocationSum()external returns(uint32);
     function removeAllocation( address _walletAddress ) external;
+    function getAllocationList() external returns( SimplifiedFormat[] memory ) ;
 
     function donate() external payable; 
     function withdrawContractBalance() external;
@@ -43,41 +44,45 @@ contract DirectDonation is IDirectDonation,Ownable {
         PercentAllocationSum = 0; 
     }
 
-    function createAllocation( address _walletAddress, uint32 _initPercentCount ) external onlyOwner {
+    function createAllocation( address _walletAddress, uint32 _initPercentCount ) external override onlyOwner {
         require(PercentAllocationSum + _initPercentCount <= 1000000000, "total percent count cannot pass 100%.");
         PercentSet.insert(_walletAddress);
         PercentAllocationMap[_walletAddress] = _initPercentCount;
         PercentAllocationSum += _initPercentCount;
         emit LogCreateAllocation( _walletAddress, _initPercentCount);
     }
-    function addAllocation( address _walletAddress, uint32 _percentCount ) external onlyOwner {
+    function addAllocation( address _walletAddress, uint32 _percentCount ) external override onlyOwner {
+        require(PercentSet.exists(_walletAddress),"address has not been added to allocation.");
         require(PercentAllocationSum + _percentCount <= 1000000000, "total percent count cannot pass 100%.");
         PercentAllocationMap[_walletAddress] += _percentCount;
         PercentAllocationSum += _percentCount;
         emit LogAddAllocation( _walletAddress, _percentCount);
     }
-    function subtractAllocation( address _walletAddress, uint32 _percentCount ) external onlyOwner {
-        require(_percentCount > PercentAllocationMap[_walletAddress], "cannot subtract more than already allocated.");
+    function subtractAllocation( address _walletAddress, uint32 _percentCount ) external override onlyOwner {
+        require(PercentSet.exists(_walletAddress),"address has not been added to allocation.");
+        require(_percentCount <= PercentAllocationMap[_walletAddress], "cannot subtract more than already allocated.");
         PercentAllocationMap[_walletAddress] -= _percentCount;
         PercentAllocationSum -= _percentCount;
         emit LogSubtractAllocation( _walletAddress, _percentCount);
     }
-    function getAllocationValue( address _walletAddress ) external view onlyOwner returns(uint32) {
+    function getAllocationValue( address _walletAddress ) external view override onlyOwner returns(uint32) {
+        require(PercentSet.exists(_walletAddress),"address has not been added to allocation.");
         return PercentAllocationMap[_walletAddress];
     }
 
-    function getAllocationSum() external view onlyOwner returns(uint32) {
+    function getAllocationSum() external view override onlyOwner returns(uint32) {
         return PercentAllocationSum;
     }
 
-    function removeAllocation( address _walletAddress ) external onlyOwner {
+    function removeAllocation( address _walletAddress ) external override onlyOwner {
+        require(PercentSet.exists(_walletAddress),"address has not been added to allocation.");
         PercentAllocationSum -= PercentAllocationMap[_walletAddress];
         PercentAllocationMap[_walletAddress] = 0;
         PercentSet.remove(_walletAddress);
         emit LogRemoveAllocation( _walletAddress);
     }
 
-    function getAllocationList() external view onlyOwner returns( SimplifiedFormat[] memory ) {
+    function getAllocationList() external override view onlyOwner returns( SimplifiedFormat[] memory ) {
         SimplifiedFormat[] memory  ret; 
         address currAddr;
         for (uint32 i = 0; i< PercentSet.count(); i++){
@@ -90,28 +95,28 @@ contract DirectDonation is IDirectDonation,Ownable {
         return ret;
     }
 
-    function donate() external payable {
+    function donate() external payable override {
         // send ethers to percentage address    
         //remaining unallocated Percent will be given to Owner
         uint256 transferable = 0;
         address currAddr;
-        for (uint32 i = 0; i< PercentSet.count(); i++){
+        for (uint32 i = 0; i < PercentSet.count(); i++){
             currAddr = PercentSet.keyAtIndex(i);
-            transferable = (msg.value*PercentAllocationMap[currAddr]) / 1000000000;
+            transferable = (msg.value/ 1000000000)*PercentAllocationMap[currAddr] ;
             (bool sent, ) = currAddr.call{value: transferable}("");
             require(sent,"Failed to send Ether");
         }
         emit LogDonation(msg.value);
     }
 
-    function withdrawContractBalance() external onlyOwner{
+    function withdrawContractBalance() external override  onlyOwner{
         uint256 contractBalance = address(this).balance; 
         (bool sent, ) = Ownable.owner().call{value: contractBalance}("");
         require(sent,"Failed to send Ether");
         emit LogWithdrawal(contractBalance);
     }
 
-    function destory() external onlyOwner{
+    function destory() external override onlyOwner{
         emit LogWithdrawal(address(this).balance);
         selfdestruct(payable(Ownable.owner()));
     }

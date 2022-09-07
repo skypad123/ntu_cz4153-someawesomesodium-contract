@@ -17,16 +17,16 @@ contract DDManagerFactory is IDDManagerFactory{
 
     mapping (address => address) DDManagerMap;
 
-    function myDDManagerExist() external view returns(bool){
+    function myDDManagerExist() external view override returns(bool){
         address mapResult = DDManagerMap[msg.sender];
         return mapResult == address(0)? false : true;
     }
 
-    function getMyDDManager() external view returns(address){
+    function getMyDDManager() external view override returns(address){
         return DDManagerMap[msg.sender];
     }
 
-    function createMyDDManager() external returns(address){
+    function createMyDDManager() external override returns(address){
         address instanceAddr = address(new DDManager(msg.sender));
         DDManagerMap[msg.sender] = instanceAddr;
         emit LogDDManagerCreation(msg.sender, instanceAddr);
