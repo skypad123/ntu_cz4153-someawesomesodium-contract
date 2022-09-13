@@ -15,10 +15,10 @@ interface IDirectDonation {
     function createAllocation( address _walletAddress, uint32 _initPercentCount ) external;
     function addAllocation( address _walletAddress, uint32 _percentCount ) external; 
     function subtractAllocation( address _walletAddress, uint32 _percentCount ) external; 
-    function getAllocationValue( address _walletAddress ) external returns(uint32); 
-    function getAllocationSum()external returns(uint32);
+    function getAllocationValue( address _walletAddress ) external view returns(uint32); 
+    function getAllocationSum()external view returns(uint32);
     function removeAllocation( address _walletAddress ) external;
-    function getAllocationList() external returns( SimplifiedFormat[] memory ) ;
+    function getWalletList() external view returns( address[] memory );
 
     //set Allowed ERC20 Tokens to be donated
     function setAcceptedERC20( address _tokenAddress ) external;
@@ -116,17 +116,17 @@ contract DirectDonation is IDirectDonation,Ownable {
         emit LogRemoveAllocation( _walletAddress);
     }
 
-    function getAllocationList() external override view onlyOwner returns( SimplifiedFormat[] memory ) {
-        SimplifiedFormat[] memory  ret; 
-        address currAddr;
-        for (uint32 i = 0; i< PercentSet.count(); i++){
-            currAddr = PercentSet.keyAtIndex(i);
-            ret[i] = SimplifiedFormat ({
-                walletAddress: currAddr,
-                percentAllocation: PercentAllocationMap[currAddr]
-            });
-        }
-        return ret;
+    function getWalletList() external override view onlyOwner returns( address[] memory ) {
+        // SimplifiedFormat[] memory  ret; 
+        // address currAddr;
+        // for (uint32 i = 0; i< PercentSet.count(); i++){
+        //     currAddr = PercentSet.keyAtIndex(i);
+        //     ret[i] = SimplifiedFormat ({
+        //         walletAddress: currAddr,
+        //         percentAllocation: PercentAllocationMap[currAddr]
+        //     });
+        // }
+        return PercentSet.keyList;
     }
 
     //set Allowed ERC20 Tokens to be donated
