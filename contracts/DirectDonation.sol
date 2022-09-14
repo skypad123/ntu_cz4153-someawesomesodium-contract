@@ -124,12 +124,12 @@ contract DirectDonation is IDirectDonation,Ownable {
     }
 
     //set Allowed ERC20 Tokens to be donated
-    function setAcceptedERC20( address _tokenAddress ) external override{
+    function setAcceptedERC20( address _tokenAddress ) external override onlyOwner{
         //need to add ERC165 checker require statement
         AcceptedTokensSet.insert(_tokenAddress);
     }    
     //delete Allowed ERC20 Tokens to be donated
-    function deleteAcceptedERC20( address _tokenAddress ) external override{
+    function deleteAcceptedERC20( address _tokenAddress ) external override onlyOwner{
         AcceptedTokensSet.remove(_tokenAddress);
     }
     //view List of Wallet Addresses to be donated to
