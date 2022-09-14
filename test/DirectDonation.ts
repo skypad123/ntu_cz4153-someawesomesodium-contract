@@ -6,8 +6,10 @@ import { ethers } from "hardhat";
 
 import { abi as directDonationABI } from "../artifacts/contracts/DirectDonation.sol/DirectDonation.json";
 
-import { DirectDonation } from "../typechain-types";
+import { DirectDonation, IERC20 } from "../typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import { ERC20 } from "../typechain-types/@openzeppelin/contracts/token/ERC20/ERC20";
+import { Contract } from "hardhat/internal/hardhat-network/stack-traces/model";
 
 
 describe("Testing DirectDonation Contract.", function () {
@@ -104,25 +106,61 @@ describe("Testing DirectDonation Contract.", function () {
 
     describe("getWalletList() returns( address[] memory)", ()=>{
 
-      it("proper list of wallet returned",async function(){
+      it("proper list of wallet returned", async function(){
+        const mainOwnerAddress = await MainOwner.getAddress();
         const secondOwnerAddress = await OtherOwners[0].getAddress();
         const thirdOwnerAddress = await OtherOwners[1].getAddress();
+        await DirectDonation.connect(MainOwner).createAllocation( mainOwnerAddress, BigInt(110011));
         const result = await DirectDonation.getWalletList();
-        expect(result.toString()).to.equal(`${thirdOwnerAddress},${secondOwnerAddress}`);
+        expect(result.toString()).to.equal(`${thirdOwnerAddress},${secondOwnerAddress},${mainOwnerAddress}`);
       })
       
     });
   })
 
   describe("Testing Accepted ERC20 List.", function() {
-    it("function setAcceptedERC20( address _tokenAddress )", ()=>{
+    
+    var mainERC20Address: string;
+    var secondaryERC20Address: string;
+
+    describe("function setAcceptedERC20( address _tokenAddress )", ()=>{
+
+      it("proper setting of ERC20 tokens return", async function (){      
+        const ERC20CF = await ethers.getContractFactory("TestERC20");
+        const mainERC20 = await ERC20CF.deploy("main", "C1", BigInt(1000000000));
+        mainERC20Address = await mainERC20.address;
+        await DirectDonation.connect(MainOwner).setAcceptedERC20(mainERC20Address);
+        const result = await DirectDonation.getAcceptedERC20List();
+        expect(result.toString()).to.equal(mainERC20Address);
+      })
       
     });
-    it("function deleteAcceptedERC20( address _tokenAddress )", ()=>{
+
+    describe("function deleteAcceptedERC20( address _tokenAddress )", ()=>{
+
+      it("proper deletion of ERC20 tokens return", async function (){      
+        const ERC20CF = await ethers.getContractFactory("TestERC20");
+        const secondaryERC20 = await ERC20CF.deploy("secondary", "C2", BigInt(1000000000));
+        secondaryERC20Address = await secondaryERC20.address;
+        await DirectDonation.connect(MainOwner).setAcceptedERC20(secondaryERC20Address);
+        await DirectDonation.connect(MainOwner).deleteAcceptedERC20(mainERC20Address);
+        const result = await DirectDonation.getAcceptedERC20List();
+        expect(result.toString()).to.equal(`${secondaryERC20Address}`);
+      })  
       
     });
-    it("function getAcceptedERC20List() returns( address[] memory )", ()=>{
+
+    describe("function getAcceptedERC20List() returns( address[] memory )", ()=>{
       
+      it("proper list of Accept ERC20 token address return", async function (){
+        const ERC20CF = await ethers.getContractFactory("TestERC20");
+        const mainERC20 = await ERC20CF.deploy("main", "C1", BigInt(1000000000));
+        mainERC20Address = await mainERC20.address;
+        await DirectDonation.connect(MainOwner).setAcceptedERC20(mainERC20Address);
+        const result = await DirectDonation.getAcceptedERC20List();
+        expect(result.toString()).to.equal(`${secondaryERC20Address},${mainERC20Address}`);
+      })
+
     });
   })
 
