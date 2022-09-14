@@ -18,12 +18,15 @@ interface IDirectDonation {
     function getAllocationValue( address _walletAddress ) external view returns(uint32); 
     function getAllocationSum()external view returns(uint32);
     function removeAllocation( address _walletAddress ) external;
-    function getWalletList() external view returns( address[] memory );
+    function getWalletList() external view returns( address[] memory);
 
+ 
     //set Allowed ERC20 Tokens to be donated
     function setAcceptedERC20( address _tokenAddress ) external;
     //delete Allowed ERC20 Tokens to be donated
     function deleteAcceptedERC20( address _tokenAddress ) external;
+    //view List of Wallet Addresses to be donated to
+    function getAcceptedERC20List() external view returns( address[] memory);
     // set if donate pays out from contract immediately or keeps in contract
     function setCustodianFeature( bool _switch) external;
     // depending CustodianFeature donate() payout the ether value to account immediately - false or accept into contract the ether value for later collection 
@@ -117,25 +120,21 @@ contract DirectDonation is IDirectDonation,Ownable {
     }
 
     function getWalletList() external override view onlyOwner returns( address[] memory ) {
-        // SimplifiedFormat[] memory  ret; 
-        // address currAddr;
-        // for (uint32 i = 0; i< PercentSet.count(); i++){
-        //     currAddr = PercentSet.keyAtIndex(i);
-        //     ret[i] = SimplifiedFormat ({
-        //         walletAddress: currAddr,
-        //         percentAllocation: PercentAllocationMap[currAddr]
-        //     });
-        // }
-        return PercentSet.keyList;
+        return PercentSet.list();
     }
 
     //set Allowed ERC20 Tokens to be donated
     function setAcceptedERC20( address _tokenAddress ) external override{
         //need to add ERC165 checker require statement
         AcceptedTokensSet.insert(_tokenAddress);
-    }    //delete Allowed ERC20 Tokens to be donated
+    }    
+    //delete Allowed ERC20 Tokens to be donated
     function deleteAcceptedERC20( address _tokenAddress ) external override{
         AcceptedTokensSet.remove(_tokenAddress);
+    }
+    //view List of Wallet Addresses to be donated to
+    function getAcceptedERC20List() external view returns( address[] memory){
+        return AcceptedTokensSet.list();
     }
 
     // set if donate pays out from contract immediately or keeps in contract
