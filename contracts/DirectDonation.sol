@@ -133,7 +133,7 @@ contract DirectDonation is IDirectDonation,Ownable {
         AcceptedTokensSet.remove(_tokenAddress);
     }
     //view List of Wallet Addresses to be donated to
-    function getAcceptedERC20List() external view returns( address[] memory){
+    function getAcceptedERC20List() external view override returns( address[] memory){
         return AcceptedTokensSet.list();
     }
 
@@ -154,7 +154,7 @@ contract DirectDonation is IDirectDonation,Ownable {
     function donate(address _tokenAddress, uint256 _sum) external override{
         require(AcceptedTokensSet.exists(_tokenAddress), "Token not accepted by owner.");
         IERC20 tokenInstance = IERC20(_tokenAddress);
-        tokenInstance.safeIncreaseAllowance(address(this),_sum); 
+        //tokenInstance.safeIncreaseAllowance(address(this),_sum); 
         tokenInstance.safeTransferFrom(msg.sender,address(this), _sum);
         emit LogERC20Donation(_tokenAddress,_sum);
         if (CustodianFeature == false){
@@ -165,6 +165,7 @@ contract DirectDonation is IDirectDonation,Ownable {
     function payoutContractBalance(uint256 _sum) public override onlyOwner{
         // send ethers to percentage address    
         //remaining unallocated Percent will be given to Owner
+
         uint256 transferable = 0;
         address currAddr;
         for (uint32 i = 0; i < PercentSet.count(); i++){
@@ -180,13 +181,12 @@ contract DirectDonation is IDirectDonation,Ownable {
     // divide and transfer current stated ERC20 token by set Percentages
     function payoutContractBalance(address _tokenAddress, uint256 _sum) public override onlyOwner{
         require(AcceptedTokensSet.exists(_tokenAddress), "Token not accepted by owner.");
+        IERC20 tokenInstance = IERC20(_tokenAddress);
         uint256 transferable = 0;
-        IERC20 tokenInstance;
         address currAddr;
         for (uint32 i = 0; i < PercentSet.count(); i++){
-            tokenInstance = IERC20(_tokenAddress);
             currAddr = PercentSet.keyAtIndex(i);
-            transferable = (_sum/ 1000000000) * PercentAllocationMap[currAddr] ;
+            transferable = (_sum* PercentAllocationMap[currAddr])/ 1000000000 ;
 
             tokenInstance.safeTransfer(currAddr,transferable);
             //require(transferApproval,"Failed to send token.");
@@ -197,19 +197,21 @@ contract DirectDonation is IDirectDonation,Ownable {
     // calls both version of payoutContract for Ether and Every donated ERC20 tokens 
     function payoutAllContractBalance() external override onlyOwner {
         payoutContractBalance(address(this).balance);
-        address currAddr;
+        address contractCurrAddr;
         IERC20 tokenInstance;
+
         for (uint32 i = 0; i < AcceptedTokensSet.count(); i++){
-            currAddr = AcceptedTokensSet.keyAtIndex(i); 
-            tokenInstance = IERC20(currAddr);
-            payoutContractBalance(currAddr,tokenInstance.balanceOf(address(this)));
+            contractCurrAddr = AcceptedTokensSet.keyAtIndex(i); 
+            tokenInstance = IERC20(contractCurrAddr);
+            payoutContractBalance(contractCurrAddr,tokenInstance.balanceOf(address(this)));
         }
     }
 
     // withdraws all ether in contract to owner
     function withdrawContractBalance() public override onlyOwner{
         uint256 contractBalance = address(this).balance; 
-        (bool sent, ) = Ownable.owner().call{value: contractBalance}("");
+
+        (bool sent, ) = msg.sender.call{value: contractBalance}("");
         require(sent,"Failed to send Ether.");
         emit LogEtherWithdrawal(Ownable.owner(), contractBalance);
     }
@@ -232,7 +234,7 @@ contract DirectDonation is IDirectDonation,Ownable {
         for (uint32 i = 0; i < AcceptedTokensSet.count(); i++){
             currAddr = AcceptedTokensSet.keyAtIndex(i); 
             tokenInstance = IERC20(currAddr);
-            payoutContractBalance(currAddr,tokenInstance.balanceOf(address(this)));
+            withdrawContractBalance(currAddr);
         }
     }
 
