@@ -71,10 +71,3 @@ describe("Testing DirectDonationFactory Contract.", function () {
 
   });
 });
-
-
-// function myDDManagerExist() external view returns(bool);
-// function getMyDDManager() external view returns(address);
-// function createMyDDManager() external returns(address);
-
-// event LogDDManagerCreation( address indexed _contractOwner, address _contractAddress);
