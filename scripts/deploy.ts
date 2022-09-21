@@ -10,7 +10,6 @@ import { abi as directDonationABI } from "../artifacts/contracts/DirectDonation.
 
 import { DirectDonation, TestERC20 } from "../typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { DirectDonation__factory } from "../typechain-types/factories/contracts/unimplemented_contracts/_DirectDonation.sol";
 import { BigNumber } from "ethers";
 
 async function main() {
