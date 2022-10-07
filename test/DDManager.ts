@@ -66,7 +66,7 @@ describe("Testing DirectDonationFactory Contract.", function () {
     describe("getDirectionDonationCount()", async function () {
         it("proper return of count at 0", async function () {
 
-            expect(await MainDDManager.getDirectionDonationCount()).to.equal(0);
+            expect(await MainDDManager.getDirectDonationCount()).to.equal(0);
         
         })
 
@@ -77,14 +77,14 @@ describe("Testing DirectDonationFactory Contract.", function () {
             const createdInstanceAddress = contractCreationLog?.at(0)?.args?.flat()[1];
             DirectDonationAddressList.push(createdInstanceAddress);
             const DirectDonation = new ethers.Contract(createdInstanceAddress,directDonationABI,MainOwner);
-            expect(await MainDDManager.getDirectionDonationCount()).to.equal(1);
+            expect(await MainDDManager.getDirectDonationCount()).to.equal(1);
         })
 
     });
 
     describe("getDirectionDonationList()", async function () {
         it("proper return current list", async function () { 
-            const returns  = await MainDDManager.connect(MainOwner).getDirectionDonationList();
+            const returns  = await MainDDManager.connect(MainOwner).getDirectDonationList();
             expect(DirectDonationAddressList[0]).to.equal(returns[0]);
         })
     })

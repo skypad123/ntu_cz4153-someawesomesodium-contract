@@ -10,8 +10,8 @@ interface IDDManager {
 
     function createDirectDonation() external returns(address);
     function removeDirectDonation(address key) external;
-    function getDirectionDonationCount() external returns(uint256);
-    function getDirectionDonationList() external view  returns(address[] memory);
+    function getDirectDonationCount() external returns(uint256);
+    function getDirectDonationList() external view  returns(address[] memory);
     function getDirectDonationAtIndex(uint index) external view returns( address ) ;
 
     event LogCreateDirectDonation(address indexed sender, address key); 
@@ -39,11 +39,11 @@ contract DDManager is IDDManager, Ownable{
         emit LogRemoveDirectDonation(msg.sender, key);
     }
     
-    function getDirectionDonationCount() external view override onlyOwner returns(uint256) {
+    function getDirectDonationCount() external view override onlyOwner returns(uint256) {
         return DonationSet.count();
     }
     
-    function getDirectionDonationList() external view override onlyOwner returns(address[] memory) {
+    function getDirectDonationList() external view override onlyOwner returns(address[] memory) {
         return DonationSet.list();
     }
 
