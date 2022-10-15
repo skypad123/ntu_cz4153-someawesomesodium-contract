@@ -48,6 +48,11 @@ interface IDirectDonation {
 
     function destory() external;
 
+
+    event LogSetAcceptedERC20( address indexed tokenAddress );
+    event LogDeleteAcceptedERC20( address indexed tokenAddress );
+
+    event LogSetCustodianFeature(bool state);
     event LogCreateAllocation(address indexed walletAddress, uint32 percentCount);
     event LogAddAllocation(address indexed  walletAddress, uint32 percentCount);
     event LogSubtractAllocation(address indexed walletAddress, uint32 percentCount);
@@ -70,7 +75,7 @@ contract DirectDonation is IDirectDonation,Ownable {
 
     mapping(address => uint32) PercentAllocationMap;
     uint32 PercentAllocationSum;
-    bool CustodianFeature;
+    bool public CustodianFeature;
 
     constructor(address _walletOwner) Ownable(){
         Ownable._transferOwnership(_walletOwner);
@@ -127,10 +132,12 @@ contract DirectDonation is IDirectDonation,Ownable {
     function setAcceptedERC20( address _tokenAddress ) external override onlyOwner{
         //need to add ERC165 checker require statement
         AcceptedTokensSet.insert(_tokenAddress);
+        emit LogSetAcceptedERC20(_tokenAddress);
     }    
     //delete Allowed ERC20 Tokens to be donated
     function deleteAcceptedERC20( address _tokenAddress ) external override onlyOwner{
         AcceptedTokensSet.remove(_tokenAddress);
+        emit LogDeleteAcceptedERC20(_tokenAddress);
     }
     //view List of Wallet Addresses to be donated to
     function getAcceptedERC20List() external view override returns( address[] memory){
@@ -140,7 +147,9 @@ contract DirectDonation is IDirectDonation,Ownable {
     // set if donate pays out from contract immediately or keeps in contract
     function setCustodianFeature(bool _switch) external override{
         CustodianFeature = _switch;
+        emit LogSetCustodianFeature(_switch);
     }
+
 
     // depending CustodianFeature donate() payout the ether value to account immediately - false or accept into contract the ether value for later collection 
     function donate() external payable override {
